@@ -291,3 +291,4 @@ java -cp target/classes pl.edu.go.client.cli.CliClient
 `MOVE B2` / `MOVE B 2`, `PASS`, `RESIGN`.
 ```
 # go-game-iteration2
+# go-game-iteration2
