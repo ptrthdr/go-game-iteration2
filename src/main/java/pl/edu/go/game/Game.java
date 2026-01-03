@@ -2,6 +2,7 @@ package pl.edu.go.game;
 
 import pl.edu.go.board.Board;
 import pl.edu.go.move.Move;
+import pl.edu.go.analysis.ScoreCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +11,10 @@ import java.util.List;
  * Game — „silnik wysokiego poziomu” nad Board.
  *
  * Ściąga (Single Source of Truth):
- * - Game pilnuje: finished, tura (currentPlayer), PASS/RESIGN, wynik, powiadomienia Observer.
- * - Board pilnuje: reguły planszy (zajęte pole, bicie, oddechy, samobójstwo, bounds).
+ * - Game pilnuje: finished, tura (currentPlayer), PASS/RESIGN, wynik,
+ * powiadomienia Observer.
+ * - Board pilnuje: reguły planszy (zajęte pole, bicie, oddechy, samobójstwo,
+ * bounds).
  * - Komendy (Command) NIE walidują tury/finished — tylko delegują do Game.
  *
  * Observer:
@@ -28,7 +31,7 @@ public class Game {
     private boolean finished = false;
     private GameResult result;
 
-    private int consecutivePasses = 0; // 2 passy => koniec gry (uprośc.)
+    private int consecutivePasses = 0; // 2 passy => koniec gry
     private final List<GameObserver> observers = new ArrayList<>();
 
     public Game(Board board) {
@@ -96,9 +99,6 @@ public class Game {
 
     /**
      * Wykonanie ruchu na (x,y) przez konkretnego gracza.
-     *
-     * Zasada: rzucamy wyjątek z czytelnym komunikatem, zamiast zwracać false.
-     * Dzięki temu Command jest cienki, a GameSession zamienia to na "ERROR ...".
      */
     public void playMove(PlayerColor player, int x, int y) {
         if (finished) {
@@ -108,13 +108,12 @@ public class Game {
             throw new IllegalStateException("Not your turn: " + player.name());
         }
 
-        // Board decyduje o legalności na planszy (zajęte, samobójstwo, bicie, bounds)
         boolean ok = board.playMove(player.toBoardColor(), x, y);
         if (!ok) {
-            throw new IllegalStateException("Illegal move at (" + (char) ('A' + x) + ", " + (y+1) + ")");
+            throw new IllegalStateException(
+                    "Illegal move at (" + (char) ('A' + x) + ", " + (y + 1) + ")");
         }
 
-        // Udany MOVE => reset passów, zmiana tury, powiadomienia
         consecutivePasses = 0;
         currentPlayer = currentPlayer.opposite();
 
@@ -124,7 +123,7 @@ public class Game {
 
     /**
      * PASS.
-     * 2 kolejne passy => koniec gry (bez liczenia punktów).
+     * 2 kolejne passy => koniec gry + ZASADA 9 (punktacja terytorium).
      */
     public void pass(PlayerColor player) {
         if (finished) {
@@ -135,9 +134,23 @@ public class Game {
         }
 
         consecutivePasses++;
+
         if (consecutivePasses >= 2) {
             finished = true;
-            result = new GameResult(null, "two passes");
+
+            // --- ZASADA 9 ---
+            int[] score = ScoreCalculator.computeScore(board);
+
+            PlayerColor winner;
+            if (score[0] > score[1]) {
+                winner = PlayerColor.BLACK;
+            } else if (score[1] > score[0]) {
+                winner = PlayerColor.WHITE;
+            } else {
+                winner = null; // remis
+            }
+
+            result = new GameResult(winner, "territory");
             notifyGameEnded();
             return;
         }

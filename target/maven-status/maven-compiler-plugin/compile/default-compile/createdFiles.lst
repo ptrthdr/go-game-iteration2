@@ -6,6 +6,8 @@ pl/edu/go/board/Territory.class
 pl/edu/go/command/TextCommandFactory.class
 pl/edu/go/model/Stone.class
 pl/edu/go/game/ObservableGame.class
+pl/edu/go/analysis/ScoreCalculator.class
+pl/edu/go/analysis/TerritoryAnalyzer.class
 pl/edu/go/move/Move.class
 pl/edu/go/server/ClientHandler.class
 pl/edu/go/move/MoveAdapter.class
@@ -21,3 +23,4 @@ pl/edu/go/move/MoveFactory.class
 pl/edu/go/command/ResignCommand.class
 pl/edu/go/command/PlaceStoneCommand.class
 pl/edu/go/game/GameObserver.class
+pl/edu/go/analysis/PositionAnalyzer.class

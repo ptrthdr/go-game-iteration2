@@ -17,10 +17,13 @@
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/client/gui/GameController.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/command/ResignCommand.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/board/BoardFactory.java
+/Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/analysis/ScoreCalculator.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/client/cli/CliClient.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/command/GameCommand.java
+/Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/analysis/PositionAnalyzer.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/server/GameServer.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/game/Game.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/client/gui/GameModel.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/move/Move.java
+/Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/analysis/TerritoryAnalyzer.java
 /Users/theodor/Downloads/Go-Game-main 2/src/main/java/pl/edu/go/game/GameObserver.java

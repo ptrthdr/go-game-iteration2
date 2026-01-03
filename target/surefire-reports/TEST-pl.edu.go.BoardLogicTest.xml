@@ -12,7 +12,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="PL"/>
     <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/theodor/Downloads/Go-Game-main 2/target/surefire/surefirebooter-20260103001919394_3.jar /Users/theodor/Downloads/Go-Game-main 2/target/surefire 2026-01-03T00-19-19_368-jvmRun1 surefire-20260103001919394_1tmp surefire_0-20260103001919394_2tmp"/>
+    <property name="sun.java.command" value="/Users/theodor/Downloads/Go-Game-main 2/target/surefire/surefirebooter-20260103183036514_3.jar /Users/theodor/Downloads/Go-Game-main 2/target/surefire 2026-01-03T18-30-36_488-jvmRun1 surefire-20260103183036514_1tmp surefire_0-20260103183036514_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/Users/theodor/Downloads/Go-Game-main 2/target/test-classes:/Users/theodor/Downloads/Go-Game-main 2/target/classes:/Users/theodor/.m2/repository/org/junit/jupiter/junit-jupiter/5.10.2/junit-jupiter-5.10.2.jar:/Users/theodor/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.10.2/junit-jupiter-api-5.10.2.jar:/Users/theodor/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/theodor/.m2/repository/org/junit/platform/junit-platform-commons/1.10.2/junit-platform-commons-1.10.2.jar:/Users/theodor/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/theodor/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.10.2/junit-jupiter-params-5.10.2.jar:/Users/theodor/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.10.2/junit-jupiter-engine-5.10.2.jar:/Users/theodor/.m2/repository/org/junit/platform/junit-platform-engine/1.10.2/junit-platform-engine-1.10.2.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -28,7 +28,7 @@
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="apple.awt.application.name" value="ForkedBooter"/>
-    <property name="surefire.real.class.path" value="/Users/theodor/Downloads/Go-Game-main 2/target/surefire/surefirebooter-20260103001919394_3.jar"/>
+    <property name="surefire.real.class.path" value="/Users/theodor/Downloads/Go-Game-main 2/target/surefire/surefirebooter-20260103183036514_3.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="25.0.1"/>
     <property name="user.name" value="theodor"/>
@@ -56,21 +56,21 @@
     <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
     <property name="java.class.version" value="69.0"/>
   </properties>
-  <testcase name="testPassChangesPlayerAndTwoPassesEndGame" classname="pl.edu.go.BoardLogicTest" time="0.014"/>
-  <testcase name="testResignEndsGameAndSetsWinner" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
-  <testcase name="testCannotPlaceOnOccupiedField" classname="pl.edu.go.BoardLogicTest" time="0.004"/>
-  <testcase name="testCaptureSingleStone" classname="pl.edu.go.BoardLogicTest" time="0.002"/>
-  <testcase name="testPlaceStoneOnEmptyField" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
-  <testcase name="testDeadGroupDetected" classname="pl.edu.go.BoardLogicTest" time="0.003"/>
+  <testcase name="testPassChangesPlayerAndTwoPassesEndGame" classname="pl.edu.go.BoardLogicTest" time="0.011"/>
+  <testcase name="testResignEndsGameAndSetsWinner" classname="pl.edu.go.BoardLogicTest" time="0.002"/>
+  <testcase name="testCannotPlaceOnOccupiedField" classname="pl.edu.go.BoardLogicTest" time="0.005"/>
+  <testcase name="testCaptureSingleStone" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
+  <testcase name="testPlaceStoneOnEmptyField" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
+  <testcase name="testDeadGroupDetected" classname="pl.edu.go.BoardLogicTest" time="0.002"/>
   <testcase name="testNeutralPoint" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
-  <testcase name="aliveGroupTouchingNeutralIsSeki" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
-  <testcase name="testIllegalMoveDoesNotChangePlayer" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
-  <testcase name="testPlayMoveChangesCurrentPlayer" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="aliveGroupTouchingNeutralIsSeki" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="testIllegalMoveDoesNotChangePlayer" classname="pl.edu.go.BoardLogicTest" time="0.002"/>
+  <testcase name="testPlayMoveChangesCurrentPlayer" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
   <testcase name="testSingleStoneLibertiesCenter" classname="pl.edu.go.BoardLogicTest" time="0.003"/>
-  <testcase name="testConnectedStonesFormGroup" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
-  <testcase name="testTerritorySimple" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="testConnectedStonesFormGroup" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="testTerritorySimple" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
   <testcase name="testCannotPlaceOutsideBoard" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
-  <testcase name="testCaptureGroup" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
-  <testcase name="testGameInitialPlayerIsBlack" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
-  <testcase name="testSuicideForbiddenUnlessCapturing" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="testCaptureGroup" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
+  <testcase name="testGameInitialPlayerIsBlack" classname="pl.edu.go.BoardLogicTest" time="0.001"/>
+  <testcase name="testSuicideForbiddenUnlessCapturing" classname="pl.edu.go.BoardLogicTest" time="0.0"/>
 </testsuite>
