@@ -1,16 +1,3 @@
-/**
- * Klasa GameController — kontroler logiki w kliencie GUI.
- *
- * Wzorzec:
- * - MVC / MVP:
- *   - Łączy widok (BoardView) i model (GameModel).
- *
- * Rola klasy:
- * - reaguje na akcje użytkownika (kliknięcia w planszę, przyciski),
- * - wysyła odpowiednie komendy tekstowe do serwera (MOVE, PASS, RESIGN),
- * - w razie potrzeby aktualizuje model i odświeża widok.
- */
-
 package pl.edu.go.client.gui;
 
 import pl.edu.go.client.net.NetworkClient;
@@ -48,6 +35,13 @@ public final class GameController {
 
     public void sendPass() {
         if (!net.isConnected()) return;
+
+        // PASS jest ruchem — tylko w swojej turze
+        if (!model.canPlayNow()) {
+            model.addLog("[INFO] PASS ignored (not your turn).");
+            return;
+        }
+
         try {
             net.sendLine("PASS");
         } catch (IOException e) {

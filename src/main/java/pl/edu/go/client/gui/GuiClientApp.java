@@ -28,6 +28,9 @@ public final class GuiClientApp extends Application {
     private Label turnLabel;
     private Label colorLabel;
 
+    private Button passBtn;
+    private Button resignBtn;
+
     @Override
     public void start(Stage stage) {
         controller = new GameController(net, model);
@@ -59,8 +62,8 @@ public final class GuiClientApp extends Application {
         boardView.setClickHandler(controller::onIntersectionClicked);
 
         // buttons
-        Button passBtn = new Button("PASS");
-        Button resignBtn = new Button("RESIGN");
+        passBtn = new Button("PASS");
+        resignBtn = new Button("RESIGN");
 
         passBtn.setMaxWidth(Double.MAX_VALUE);
         resignBtn.setMaxWidth(Double.MAX_VALUE);
@@ -95,7 +98,7 @@ public final class GuiClientApp extends Application {
         model.addListener(() -> Platform.runLater(this::refreshUI));
 
         // network callbacks
-        net.setOnLine(line -> model.acceptServerLine(line));
+        net.setOnLine(model::acceptServerLine);
         net.setOnError(ex -> {
             model.addLog("[ERROR] " + ex.getMessage());
             Platform.runLater(() -> {
@@ -107,23 +110,38 @@ public final class GuiClientApp extends Application {
 
         connectBtn.setOnAction(e -> {
             String host = hostField.getText().trim();
-            int port = Integer.parseInt(portField.getText().trim());
+            int port;
+
+            try {
+                port = Integer.parseInt(portField.getText().trim());
+            } catch (NumberFormatException nfe) {
+                statusLabel.setText("Invalid port");
+                model.addLog("[ERROR] Invalid port: " + portField.getText());
+                return;
+            }
 
             try {
                 net.connect(host, port);
                 statusLabel.setText("Connected: " + host + ":" + port);
                 connectBtn.setDisable(true);
                 disconnectBtn.setDisable(false);
+                model.addLog("Connected to " + host + ":" + port);
+                refreshUI();
             } catch (Exception ex) {
-                model.addLog("[ERROR] " + ex.getMessage());
+                statusLabel.setText("Connect failed: " + ex.getClass().getSimpleName());
+                model.addLog("[ERROR] Connect failed: " + ex.getMessage());
+                connectBtn.setDisable(false);
+                disconnectBtn.setDisable(true);
             }
         });
 
         disconnectBtn.setOnAction(e -> {
             net.disconnect();
             statusLabel.setText("Disconnected");
+            model.addLog("Disconnected.");
             connectBtn.setDisable(false);
             disconnectBtn.setDisable(true);
+            refreshUI();
         });
 
         refreshUI();
@@ -147,7 +165,16 @@ public final class GuiClientApp extends Application {
         logArea.setText(model.getLogText());
         logArea.positionCaret(logArea.getLength());
 
-        if (model.isFinished()) {
+        boolean connected = net.isConnected();
+        boolean finished = model.isFinished();
+
+        // PASS tylko gdy jesteś połączony, gra trwa i jest Twoja tura
+        passBtn.setDisable(!connected || finished || !model.canPlayNow());
+
+        // RESIGN: dozwolone zawsze gdy połączony i gra nie jest zakończona
+        resignBtn.setDisable(!connected || finished);
+
+        if (finished) {
             statusLabel.setText("Finished: " + model.getEndMessage());
         }
     }

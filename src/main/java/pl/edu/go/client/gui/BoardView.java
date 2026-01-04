@@ -74,7 +74,7 @@ public final class BoardView extends Canvas {
 
         // stones
         int[][] board = model.getBoard();
-        double stoneR = Math.min(stepX, stepY) * 0.42;
+        double stoneR = Math.min(stepX, stepY) * 0.2;
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {

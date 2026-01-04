@@ -1,17 +1,3 @@
-/**
- * Klasa GameModel — model danych dla klienta GUI.
- *
- * Wzorce:
- * - Observer / MVC:
- *   - Owijka na obiekt Game po stronie klienta.
- *   - Może implementować GameObserver i reagować na zmiany stanu gry,
- *     udostępniając dane widokowi (BoardView).
- *
- * Rola klasy:
- * - przechowuje bieżący stan gry z punktu widzenia klienta GUI,
- * - udostępnia gettery używane przez warstwę widoku.
- */
-
 package pl.edu.go.client.gui;
 
 import pl.edu.go.game.PlayerColor;
@@ -19,7 +5,6 @@ import pl.edu.go.game.PlayerColor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * GameModel — stan klienta GUI.
@@ -30,6 +15,8 @@ import java.util.function.Consumer;
  * - TURN <BLACK|WHITE>
  * - BOARD <size>, ROW <...>, END_BOARD
  * - END <WINNER> <reason>
+ *
+ * UWAGA: serwer koduje kamienie jako X (BLACK) i O (WHITE).
  */
 public final class GameModel {
 
@@ -51,7 +38,6 @@ public final class GameModel {
     private final List<String> pendingRows = new ArrayList<>();
 
     private final List<String> logLines = new ArrayList<>();
-
     private final List<Runnable> listeners = new ArrayList<>();
 
     public void addListener(Runnable r) {
@@ -64,6 +50,17 @@ public final class GameModel {
         }
     }
 
+    /**
+     * Dodaje linię do logu i odświeża UI.
+     */
+    public synchronized void addLog(String s) {
+        logLines.add(s);
+        if (logLines.size() > 300) {
+            logLines.remove(0);
+        }
+        notifyListeners();
+    }
+
     public synchronized void acceptServerLine(String line) {
         if (line == null) return;
 
@@ -71,7 +68,6 @@ public final class GameModel {
             String c = line.substring("WELCOME ".length()).trim();
             myColor = PlayerColor.valueOf(c);
             addLog("You are " + myColor);
-            notifyListeners();
             return;
         }
 
@@ -84,13 +80,11 @@ public final class GameModel {
 
         if (line.startsWith("INFO ")) {
             addLog(line.substring("INFO ".length()));
-            notifyListeners();
             return;
         }
 
         if (line.startsWith("ERROR ")) {
             addLog("[ERROR] " + line.substring("ERROR ".length()));
-            notifyListeners();
             return;
         }
 
@@ -114,9 +108,12 @@ public final class GameModel {
                     String row = pendingRows.get(y);
                     for (int x = 0; x < boardSize; x++) {
                         char ch = row.charAt(x);
+
+                        // Serwer: X=BLACK, O=WHITE, .=EMPTY
+                        // (dla kompatybilności wspieramy też B/W)
                         board[x][y] = switch (ch) {
-                            case 'B' -> BLACK;
-                            case 'W' -> WHITE;
+                            case 'X', 'B' -> BLACK;
+                            case 'O', 'W' -> WHITE;
                             default -> EMPTY;
                         };
                     }
@@ -132,20 +129,11 @@ public final class GameModel {
             finished = true;
             endMessage = line;
             addLog("[END] " + line.substring("END ".length()));
-            notifyListeners();
             return;
         }
 
         // fallback
         addLog("[SERVER] " + line);
-        notifyListeners();
-    }
-
-    public void addLog(String s) {
-        logLines.add(s);
-        if (logLines.size() > 300) {
-            logLines.remove(0);
-        }
     }
 
     public String getLogText() {
