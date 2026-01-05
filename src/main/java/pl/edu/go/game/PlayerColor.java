@@ -1,14 +1,10 @@
-package pl.edu.go.game;
-
 /**
- * Enum PlayerColor — kolor gracza (BLACK lub WHITE).
+ * {@code PlayerColor} reprezentuje kolor gracza (BLACK/WHITE) oraz operacje pomocnicze
+ * (np. zamiana na przeciwnika).
  *
- * Rola klasy:
- * - reprezentuje kolor na poziomie logiki gry (Game),
- * - udostępnia metodę opposite() do zmiany aktualnego gracza,
- * - mapuje na wartości int używane przez Board (toBoardColor / fromBoardColor),
- *   dzięki czemu logika gry nie musi znać stałych Board.BLACK/WHITE bezpośrednio.
+ * <p>Enum jest używany w logice gry oraz w protokole komunikacji klient–serwer.
  */
+package pl.edu.go.game;
 
 import pl.edu.go.board.Board;
 

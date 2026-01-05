@@ -1,20 +1,12 @@
 package pl.edu.go.command;
 
 /**
- * ResignCommand — komenda reprezentująca rezygnację gracza.
+ * {@code ResignCommand} enkapsuluje komendę {@code RESIGN}.
  *
- * Wzorzec projektowy:
- * - Command:
- *   - Implementuje GameCommand, zawiera informację o graczu,
- *     który się poddaje.
- *
- * Rola klasy:
- * - w metodzie execute(Game game) wywołuje game.resign(player),
- *   co kończy grę i ustawia zwycięzcę.
- *
- * Użycie:
- * - tworzona w TextCommandFactory na podstawie komunikatu "RESIGN".
+ * <p><b>Wzorzec projektowy:</b> <b>Command</b>.
+ * Zgodnie z zadaniem 10 może zakończyć grę w dowolnym momencie.
  */
+
 
 import pl.edu.go.game.Game;
 import pl.edu.go.game.PlayerColor;

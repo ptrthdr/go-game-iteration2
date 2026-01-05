@@ -1,23 +1,21 @@
+/**
+ * {@code GameModel} przechowuje stan gry po stronie klienta GUI.
+ *
+ * <p><b>MVC:</b> pełni rolę <b>Modelu</b>. Jest aktualizowany wyłącznie komunikatami protokołu z serwera
+ * (BOARD, TURN, PHASE, SCORE, TERRITORY, DEADSTONES, END).
+ *
+ * <p>Model nie implementuje reguł gry i nie liczy wyniku — Single Source of Truth pozostaje po stronie serwera.
+ */
+
 package pl.edu.go.client.gui;
 
+import pl.edu.go.game.GamePhase;
 import pl.edu.go.game.PlayerColor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * GameModel — stan klienta GUI.
- *
- * Parsuje komunikaty serwera:
- * - WELCOME <BLACK|WHITE>
- * - INFO <...>, ERROR <...>
- * - TURN <BLACK|WHITE>
- * - BOARD <size>, ROW <...>, END_BOARD
- * - END <WINNER> <reason>
- *
- * UWAGA: serwer koduje kamienie jako X (BLACK) i O (WHITE).
- */
 public final class GameModel {
 
     public static final int EMPTY = 0;
@@ -27,17 +25,35 @@ public final class GameModel {
     private PlayerColor myColor;
     private PlayerColor currentTurn;
 
+    private GamePhase phase = GamePhase.PLAYING;
+
     private int boardSize = 9;
     private int[][] board = new int[boardSize][boardSize];
 
     private boolean finished;
     private String endMessage = "";
 
+    private Integer scoreBlack = null;
+    private Integer scoreWhite = null;
+
+    // TERRITORY overlay (w review / po territory-end)
+    private char[][] territoryMap = null;
+
+    // DEAD stones mask (w review / po territory-end)
+    private boolean[][] deadMask = null;
+
     // parsing BOARD
     private int pendingBoardSize = -1;
     private final List<String> pendingRows = new ArrayList<>();
 
-    private final List<String> logLines = new ArrayList<>();
+    // parsing TERRITORY
+    private int pendingTerritorySize = -1;
+    private final List<String> pendingTerritoryRows = new ArrayList<>();
+
+    // parsing DEADSTONES
+    private int pendingDeadSize = -1;
+    private final List<String> pendingDeadRows = new ArrayList<>();
+
     private final List<Runnable> listeners = new ArrayList<>();
 
     public void addListener(Runnable r) {
@@ -45,20 +61,7 @@ public final class GameModel {
     }
 
     private void notifyListeners() {
-        for (Runnable r : listeners) {
-            r.run();
-        }
-    }
-
-    /**
-     * Dodaje linię do logu i odświeża UI.
-     */
-    public synchronized void addLog(String s) {
-        logLines.add(s);
-        if (logLines.size() > 300) {
-            logLines.remove(0);
-        }
-        notifyListeners();
+        for (Runnable r : listeners) r.run();
     }
 
     public synchronized void acceptServerLine(String line) {
@@ -67,7 +70,23 @@ public final class GameModel {
         if (line.startsWith("WELCOME ")) {
             String c = line.substring("WELCOME ".length()).trim();
             myColor = PlayerColor.valueOf(c);
-            addLog("You are " + myColor);
+            notifyListeners();
+            return;
+        }
+
+        if (line.startsWith("PHASE ")) {
+            String p = line.substring("PHASE ".length()).trim();
+            phase = GamePhase.valueOf(p);
+
+            // po RESUME (PLAYING) czyścimy overlay i score
+            if (phase == GamePhase.PLAYING) {
+                territoryMap = null;
+                deadMask = null;
+                scoreBlack = null;
+                scoreWhite = null;
+            }
+
+            notifyListeners();
             return;
         }
 
@@ -78,27 +97,38 @@ public final class GameModel {
             return;
         }
 
+        if (line.startsWith("SCORE ")) {
+            String[] parts = line.split("\\s+");
+            if (parts.length == 3) {
+                try {
+                    scoreBlack = Integer.parseInt(parts[1]);
+                    scoreWhite = Integer.parseInt(parts[2]);
+                } catch (NumberFormatException ignored) {}
+            }
+            notifyListeners();
+            return;
+        }
+
+        // INFO/ERROR: bez loga w GUI – wypisujemy do terminala klienta
         if (line.startsWith("INFO ")) {
-            addLog(line.substring("INFO ".length()));
+            System.out.println("[SERVER] " + line);
             return;
         }
-
         if (line.startsWith("ERROR ")) {
-            addLog("[ERROR] " + line.substring("ERROR ".length()));
+            System.err.println("[SERVER] " + line);
             return;
         }
 
+        // --- BOARD ---
         if (line.startsWith("BOARD ")) {
             pendingBoardSize = Integer.parseInt(line.substring("BOARD ".length()).trim());
             pendingRows.clear();
             return;
         }
-
         if (line.startsWith("ROW ")) {
             pendingRows.add(line.substring("ROW ".length()));
             return;
         }
-
         if (line.equals("END_BOARD")) {
             if (pendingBoardSize > 0 && pendingRows.size() == pendingBoardSize) {
                 boardSize = pendingBoardSize;
@@ -108,9 +138,6 @@ public final class GameModel {
                     String row = pendingRows.get(y);
                     for (int x = 0; x < boardSize; x++) {
                         char ch = row.charAt(x);
-
-                        // Serwer: X=BLACK, O=WHITE, .=EMPTY
-                        // (dla kompatybilności wspieramy też B/W)
                         board[x][y] = switch (ch) {
                             case 'X', 'B' -> BLACK;
                             case 'O', 'W' -> WHITE;
@@ -125,50 +152,119 @@ public final class GameModel {
             return;
         }
 
-        if (line.startsWith("END ")) {
-            finished = true;
-            endMessage = line;
-            addLog("[END] " + line.substring("END ".length()));
+        // --- TERRITORY ---
+        if (line.startsWith("TERRITORY ")) {
+            pendingTerritorySize = Integer.parseInt(line.substring("TERRITORY ".length()).trim());
+            pendingTerritoryRows.clear();
+            return;
+        }
+        if (line.startsWith("TROW ")) {
+            pendingTerritoryRows.add(line.substring("TROW ".length()));
+            return;
+        }
+        if (line.equals("END_TERRITORY")) {
+            if (pendingTerritorySize > 0 && pendingTerritoryRows.size() == pendingTerritorySize) {
+                int n = pendingTerritorySize;
+                char[][] map = new char[n][n];
+
+                for (int y = 0; y < n; y++) {
+                    String row = pendingTerritoryRows.get(y);
+                    for (int x = 0; x < n; x++) {
+                        map[x][y] = row.charAt(x);
+                    }
+                }
+                territoryMap = map;
+            }
+            pendingTerritorySize = -1;
+            pendingTerritoryRows.clear();
+            notifyListeners();
             return;
         }
 
-        // fallback
-        addLog("[SERVER] " + line);
-    }
-
-    public String getLogText() {
-        StringBuilder sb = new StringBuilder();
-        for (String l : logLines) {
-            sb.append(l).append('\n');
+        // --- DEADSTONES ---
+        if (line.startsWith("DEADSTONES ")) {
+            pendingDeadSize = Integer.parseInt(line.substring("DEADSTONES ".length()).trim());
+            pendingDeadRows.clear();
+            return;
         }
-        return sb.toString();
+        if (line.startsWith("DROW ")) {
+            pendingDeadRows.add(line.substring("DROW ".length()));
+            return;
+        }
+        if (line.equals("END_DEADSTONES")) {
+            if (pendingDeadSize > 0 && pendingDeadRows.size() == pendingDeadSize) {
+                int n = pendingDeadSize;
+                boolean[][] dm = new boolean[n][n];
+
+                for (int y = 0; y < n; y++) {
+                    String row = pendingDeadRows.get(y);
+                    for (int x = 0; x < n; x++) {
+                        dm[x][y] = (row.charAt(x) == '1');
+                    }
+                }
+                deadMask = dm;
+            }
+            pendingDeadSize = -1;
+            pendingDeadRows.clear();
+            notifyListeners();
+            return;
+        }
+
+        if (line.startsWith("END ")) {
+            finished = true;
+            endMessage = line;
+
+            // jeśli resign – czyścimy overlay/score, bo to był tylko podgląd w review
+            String lower = line.toLowerCase();
+            if (lower.contains(" resign")) {
+                territoryMap = null;
+                deadMask = null;
+                scoreBlack = null;
+                scoreWhite = null;
+            }
+
+            notifyListeners();
+            return;
+        }
+
+        // reszta: do terminala klienta
+        System.out.println("[SERVER] " + line);
     }
 
-    public PlayerColor getMyColor() {
-        return myColor;
-    }
+    public PlayerColor getMyColor() { return myColor; }
+    public PlayerColor getCurrentTurn() { return currentTurn; }
+    public GamePhase getPhase() { return phase; }
 
-    public PlayerColor getCurrentTurn() {
-        return currentTurn;
-    }
+    public Integer getScoreBlack() { return scoreBlack; }
+    public Integer getScoreWhite() { return scoreWhite; }
 
-    public boolean isFinished() {
-        return finished;
-    }
+    public char[][] getTerritoryMap() { return territoryMap; }
+    public boolean[][] getDeadMask() { return deadMask; }
 
-    public String getEndMessage() {
-        return endMessage;
-    }
+    public boolean isFinished() { return finished; }
+    public String getEndMessage() { return endMessage; }
 
-    public int getBoardSize() {
-        return boardSize;
-    }
-
-    public int[][] getBoard() {
-        return board;
-    }
+    public int getBoardSize() { return boardSize; }
+    public int[][] getBoard() { return board; }
 
     public boolean canPlayNow() {
-        return !finished && myColor != null && currentTurn != null && myColor == currentTurn;
+        return !finished
+                && phase == GamePhase.PLAYING
+                && myColor != null
+                && currentTurn != null
+                && myColor == currentTurn;
+    }
+
+    public boolean inReview() {
+        return !finished && phase == GamePhase.SCORING_REVIEW;
+    }
+
+    public boolean finishedByTerritory() {
+        if (!finished || endMessage == null) return false;
+        return endMessage.toLowerCase().contains(" territory");
+    }
+
+    public boolean showScoringOverlays() {
+        return inReview() || finishedByTerritory();
     }
 }

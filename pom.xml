@@ -121,6 +121,43 @@
                 </configuration>
             </plugin>
 
+            <!-- Javadoc: generowanie dokumentacji API -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <docencoding>${project.build.sourceEncoding}</docencoding>
+                    <charset>${project.build.sourceEncoding}</charset>
+
+                    <!-- Żeby nie wywalało się na ostrych checkach HTML/doclint (częste na studiach) -->
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+
+                    <!-- Opcjonalnie: jeśli chcesz bardziej "czytelną" dokumentację -->
+                    <show>protected</show>
+                </configuration>
+                <executions>
+                    <!-- mvn javadoc:javadoc -->
+                    <execution>
+                        <id>generate-javadoc</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- mvn package -> dołącza target/*-javadoc.jar -->
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
         </plugins>
     </build>
 

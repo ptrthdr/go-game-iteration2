@@ -1,3 +1,17 @@
+/**
+ * {@code ClientHandler} obsługuje pojedyncze połączenie TCP klienta (socket I/O).
+ *
+ * <p><b>Architektura:</b> warstwa transportowa (Layered Architecture).
+ * Klasa odpowiada wyłącznie za komunikację: czytanie linii i wysyłanie odpowiedzi.
+ *
+ * <p><b>Wzorzec projektowy:</b>
+ * <ul>
+ *   <li><b>Reactor/Handler</b> (idiom serwerów sieciowych) — obiekt-hendler odpowiedzialny
+ *       za obsługę jednego klienta i przekazywanie danych do warstwy aplikacyjnej ({@link pl.edu.go.server.GameSession}).</li>
+ * </ul>
+ *
+ * <p>Klasa nie zawiera reguł gry; logika pozostaje w {@code Game}.
+ */
 package pl.edu.go.server;
 
 import pl.edu.go.game.PlayerColor;
@@ -7,16 +21,7 @@ import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Klasa ClientHandler — obsługa pojedynczego klienta po stronie serwera.
- *
- * Rola klasy:
- * - opakowuje gniazdo sieciowe (Socket) jednego gracza,
- * - w osobnym wątku:
- *   * czyta linie tekstu od klienta,
- *   * przekazuje je do GameSession.handleClientMessage(...),
- * - udostępnia metodę sendLine(...) do wysyłania komunikatów do klienta.
- */
+
 public final class ClientHandler implements Runnable {
 
     private final Socket socket;

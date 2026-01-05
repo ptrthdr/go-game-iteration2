@@ -1,14 +1,12 @@
+/**
+ * {@code GameResult} enkapsuluje wynik zakończonej gry: zwycięzcę (lub remis) oraz przyczynę zakończenia
+ * (np. {@code resign} lub {@code territory}).
+ *
+ * <p>Obiekt jest emitowany jako zdarzenie w mechanizmie {@link pl.edu.go.game.GameObserver} (Observer).
+ */
+
 package pl.edu.go.game;
 
-/**
- * Klasa GameResult — prosty obiekt opisujący wynik gry.
- *
- * Rola klasy:
- * - przechowuje:
- *   * zwycięzcę (PlayerColor lub null, jeśli brak),
- *   * powód zakończenia gry (np. "resign", "two passes"),
- * - przekazywana do obserwatorów w metodzie onGameEnded.
- */
 
 public class GameResult {
     private final PlayerColor winner;

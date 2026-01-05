@@ -1,3 +1,12 @@
+/**
+ * {@code GameServer} uruchamia serwer TCP dla gry Go.
+ *
+ * <p><b>Architektura:</b> Client–Server.
+ * {@code GameServer} inicjalizuje warstwę transportową (socket), tworzy sesję gry
+ * ({@link pl.edu.go.server.GameSession}) i przypisuje łączących się klientów do kolorów.
+ *
+ * <p>Klasa nie implementuje reguł gry ani punktacji; odpowiada za bootstrap i cykl życia serwera.
+ */
 package pl.edu.go.server;
 
 import pl.edu.go.board.Board;
@@ -9,18 +18,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- * Klasa GameServer — punkt startowy serwera gry.
- *
- * Rola klasy:
- * - tworzy obiekt Board i Game dla nowej partii,
- * - tworzy GameSession,
- * - otwiera ServerSocket na porcie 5001,
- * - akceptuje dwóch klientów (BLACK, WHITE),
- * - uruchamia osobne wątki ClientHandler,
- * - WAŻNE: czeka aż oba ClientHandler będą gotowe do wysyłania (out != null),
- * - dopiero potem wywołuje session.startGame().
- */
+
 public final class GameServer {
 
     public static void main(String[] args) {

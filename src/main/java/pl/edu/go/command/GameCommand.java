@@ -1,18 +1,13 @@
 package pl.edu.go.command;
 
 /**
- * Interfejs GameCommand — wspólne API dla wszystkich komend gry.
+ * {@code GameCommand} reprezentuje komendę wykonywaną na obiekcie {@link pl.edu.go.game.Game}.
  *
- * Wzorzec projektowy:
- * - Command:
- *   - Każda akcja wywoływana przez gracza (ruch, pass, rezygnacja)
- *     jest reprezentowana jako obiekt typu GameCommand.
- *   - Serwer może przekazać komendę do Game bez znajomości szczegółów
- *     jej wykonania.
- *
- * Metoda:
- * - execute(Game game) — wykonuje konkretną akcję na podanej instancji gry.
+ * <p><b>Wzorzec projektowy:</b> <b>Command</b>.
+ * Poszczególne implementacje enkapsulują wywołanie (MOVE/PASS/RESIGN/AGREE/RESUME)
+ * i delegują wykonanie do {@code Game}.
  */
+
 
 import pl.edu.go.game.Game;
 

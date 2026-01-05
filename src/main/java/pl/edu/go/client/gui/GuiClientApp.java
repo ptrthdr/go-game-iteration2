@@ -1,3 +1,16 @@
+/**
+ * {@code GuiClientApp} jest główną aplikacją JavaFX klienta gry Go.
+ *
+ * <p><b>Wzorzec architektoniczny:</b> <b>MVC</b> (w praktyce odmiana MVP).
+ * <ul>
+ *   <li><b>Model</b>: {@link pl.edu.go.client.gui.GameModel} — stan gry po stronie klienta,</li>
+ *   <li><b>View</b>: {@link pl.edu.go.client.gui.BoardView} + elementy UI,</li>
+ *   <li><b>Controller</b>: {@link pl.edu.go.client.gui.GameController} — mapuje akcje UI na komendy protokołu.</li>
+ * </ul>
+ *
+ * <p>GUI nie liczy reguł Go ani punktacji — jest prezentacją stanu otrzymanego z serwera.
+ */
+
 package pl.edu.go.client.gui;
 
 import javafx.application.Application;
@@ -8,13 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import pl.edu.go.client.net.NetworkClient;
+import pl.edu.go.game.GamePhase;
 
-/**
- * GuiClientApp — klient okienkowy (JavaFX) do gry Go.
- *
- * Uruchamianie:
- * mvn javafx:run
- */
 public final class GuiClientApp extends Application {
 
     private final GameModel model = new GameModel();
@@ -23,19 +31,21 @@ public final class GuiClientApp extends Application {
     private BoardView boardView;
     private GameController controller;
 
-    private TextArea logArea;
     private Label statusLabel;
     private Label turnLabel;
     private Label colorLabel;
+    private Label phaseLabel;
+    private Label scoreLabel;
 
     private Button passBtn;
     private Button resignBtn;
+    private Button agreeBtn;
+    private Button resumeBtn;
 
     @Override
     public void start(Stage stage) {
         controller = new GameController(net, model);
 
-        // UI: connect bar
         TextField hostField = new TextField("localhost");
         hostField.setPrefColumnCount(12);
 
@@ -46,67 +56,70 @@ public final class GuiClientApp extends Application {
         Button disconnectBtn = new Button("Disconnect");
         disconnectBtn.setDisable(true);
 
-        HBox connectBar = new HBox(8, new Label("Host:"), hostField, new Label("Port:"), portField, connectBtn, disconnectBtn);
+        HBox connectBar = new HBox(8,
+                new Label("Host:"), hostField,
+                new Label("Port:"), portField,
+                connectBtn, disconnectBtn);
         connectBar.setPadding(new Insets(10));
 
-        // labels
         statusLabel = new Label("Disconnected");
         colorLabel = new Label("Color: -");
         turnLabel = new Label("Turn: -");
+        phaseLabel = new Label("Phase: -");
+        scoreLabel = new Label("Score: -");
 
-        VBox infoBox = new VBox(6, statusLabel, colorLabel, turnLabel);
+        VBox infoBox = new VBox(6, statusLabel, colorLabel, turnLabel, phaseLabel, scoreLabel);
         infoBox.setPadding(new Insets(10));
 
-        // board
         boardView = new BoardView(model, 560, 560);
         boardView.setClickHandler(controller::onIntersectionClicked);
 
-        // buttons
         passBtn = new Button("PASS");
         resignBtn = new Button("RESIGN");
+        agreeBtn = new Button("AGREE");
+        resumeBtn = new Button("RESUME");
 
         passBtn.setMaxWidth(Double.MAX_VALUE);
         resignBtn.setMaxWidth(Double.MAX_VALUE);
+        agreeBtn.setMaxWidth(Double.MAX_VALUE);
+        resumeBtn.setMaxWidth(Double.MAX_VALUE);
 
         passBtn.setOnAction(e -> controller.sendPass());
         resignBtn.setOnAction(e -> controller.sendResign());
+        agreeBtn.setOnAction(e -> controller.sendAgree());
+        resumeBtn.setOnAction(e -> controller.sendResume());
 
-        VBox actionsBox = new VBox(8, passBtn, resignBtn);
+        VBox actionsBox = new VBox(8,
+                passBtn, resignBtn,
+                new Separator(),
+                agreeBtn, resumeBtn);
         actionsBox.setPadding(new Insets(10));
         actionsBox.setFillWidth(true);
 
-        // log
-        logArea = new TextArea();
-        logArea.setEditable(false);
-        logArea.setPrefRowCount(10);
-
-        VBox rightPane = new VBox(10, infoBox, actionsBox, new Label("Log:"), logArea);
+        VBox rightPane = new VBox(10, infoBox, actionsBox);
         rightPane.setPadding(new Insets(10));
-        rightPane.setPrefWidth(320);
+        rightPane.setPrefWidth(340);
 
         BorderPane root = new BorderPane();
         root.setTop(connectBar);
         root.setCenter(boardView);
         root.setRight(rightPane);
 
-        Scene scene = new Scene(root, 920, 650);
+        Scene scene = new Scene(root, 950, 650);
         stage.setTitle("Go Game - GUI Client");
         stage.setScene(scene);
         stage.show();
 
-        // model -> UI refresh
         model.addListener(() -> Platform.runLater(this::refreshUI));
 
-        // network callbacks
         net.setOnLine(model::acceptServerLine);
-        net.setOnError(ex -> {
-            model.addLog("[ERROR] " + ex.getMessage());
-            Platform.runLater(() -> {
-                statusLabel.setText("Disconnected (error)");
-                connectBtn.setDisable(false);
-                disconnectBtn.setDisable(true);
-            });
-        });
+        net.setOnError(ex -> Platform.runLater(() -> {
+            System.err.println("[CLIENT] Network error: " + ex.getMessage());
+            statusLabel.setText("Disconnected (error)");
+            connectBtn.setDisable(false);
+            disconnectBtn.setDisable(true);
+            refreshUI();
+        }));
 
         connectBtn.setOnAction(e -> {
             String host = hostField.getText().trim();
@@ -116,7 +129,6 @@ public final class GuiClientApp extends Application {
                 port = Integer.parseInt(portField.getText().trim());
             } catch (NumberFormatException nfe) {
                 statusLabel.setText("Invalid port");
-                model.addLog("[ERROR] Invalid port: " + portField.getText());
                 return;
             }
 
@@ -125,11 +137,10 @@ public final class GuiClientApp extends Application {
                 statusLabel.setText("Connected: " + host + ":" + port);
                 connectBtn.setDisable(true);
                 disconnectBtn.setDisable(false);
-                model.addLog("Connected to " + host + ":" + port);
                 refreshUI();
             } catch (Exception ex) {
-                statusLabel.setText("Connect failed: " + ex.getClass().getSimpleName());
-                model.addLog("[ERROR] Connect failed: " + ex.getMessage());
+                statusLabel.setText("Connect failed");
+                System.err.println("[CLIENT] Connect failed: " + ex.getMessage());
                 connectBtn.setDisable(false);
                 disconnectBtn.setDisable(true);
             }
@@ -138,7 +149,6 @@ public final class GuiClientApp extends Application {
         disconnectBtn.setOnAction(e -> {
             net.disconnect();
             statusLabel.setText("Disconnected");
-            model.addLog("Disconnected.");
             connectBtn.setDisable(false);
             disconnectBtn.setDisable(true);
             refreshUI();
@@ -150,31 +160,37 @@ public final class GuiClientApp extends Application {
     private void refreshUI() {
         boardView.redraw();
 
-        if (model.getMyColor() != null) {
-            colorLabel.setText("Color: " + model.getMyColor());
-        } else {
-            colorLabel.setText("Color: -");
-        }
+        if (model.getMyColor() != null) colorLabel.setText("Color: " + model.getMyColor());
+        else colorLabel.setText("Color: -");
 
-        if (model.getCurrentTurn() != null) {
+        if (model.getPhase() == GamePhase.PLAYING && model.getCurrentTurn() != null) {
             turnLabel.setText("Turn: " + model.getCurrentTurn());
         } else {
             turnLabel.setText("Turn: -");
         }
 
-        logArea.setText(model.getLogText());
-        logArea.positionCaret(logArea.getLength());
+        phaseLabel.setText("Phase: " + model.getPhase());
+
+        boolean showScore = model.showScoringOverlays();
+        if (showScore && model.getScoreBlack() != null && model.getScoreWhite() != null) {
+            scoreLabel.setText("Score: BLACK " + model.getScoreBlack() + " / WHITE " + model.getScoreWhite());
+        } else {
+            scoreLabel.setText("Score: -");
+        }
 
         boolean connected = net.isConnected();
         boolean finished = model.isFinished();
 
-        // PASS tylko gdy jesteś połączony, gra trwa i jest Twoja tura
         passBtn.setDisable(!connected || finished || !model.canPlayNow());
-
-        // RESIGN: dozwolone zawsze gdy połączony i gra nie jest zakończona
         resignBtn.setDisable(!connected || finished);
 
-        if (finished) {
+        boolean review = model.inReview();
+        agreeBtn.setDisable(!connected || finished || !review);
+        resumeBtn.setDisable(!connected || finished || !review);
+
+        if (connected && !finished) {
+            // statusLabel zostawiamy jako stan połączenia
+        } else if (finished) {
             statusLabel.setText("Finished: " + model.getEndMessage());
         }
     }

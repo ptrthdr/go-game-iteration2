@@ -5,15 +5,18 @@ import pl.edu.go.board.Territory;
 import pl.edu.go.model.StoneGroup;
 
 /**
- * ScoreCalculator
+ * {@code ScoreCalculator} wylicza wynik końcowy gry w wariancie „territory scoring”.
  *
- * Odpowiada WYŁĄCZNIE za realizację zasady 9:
- * - liczenie terytorium
- * - liczenie jeńców
- * - porównanie punktów
+ * <p>Wynik jest sumą:
+ * <ul>
+ *   <li><b>terytorium</b> — z {@link pl.edu.go.analysis.TerritoryAnalyzer},</li>
+ *   <li><b>jeńców (dead stones)</b> — z {@link pl.edu.go.analysis.PositionAnalyzer#getDeadGroups()}
+ *       (kamienie uznane za martwe dodawane jako punkty dla przeciwnika).</li>
+ * </ul>
  *
- * Klasa bezstanowa – analizuje gotową planszę.
+ * <p>Klasa pełni rolę serwisu obliczeniowego (Utility/Service). Nie modyfikuje planszy.
  */
+
 public class ScoreCalculator {
 
     /**

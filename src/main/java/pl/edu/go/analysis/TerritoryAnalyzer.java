@@ -5,6 +5,14 @@ import pl.edu.go.board.Territory;
 import pl.edu.go.model.Stone;
 import pl.edu.go.model.StoneGroup;
 
+/**
+ * {@code TerritoryAnalyzer} analizuje planszę i przypisuje puste punkty do terytorium
+ * (BLACK/WHITE/neutral, w tym seki) zgodnie z regułami projektu.
+ *
+ * <p>Wynik analizy jest używany do punktacji ({@link pl.edu.go.analysis.ScoreCalculator})
+ * oraz do wizualizacji w GUI (overlay w {@code SCORING_REVIEW}).
+ */
+
 public class TerritoryAnalyzer {
 
     private final Board board;

@@ -1,25 +1,13 @@
+/**
+ * {@code PlaceStoneCommand} enkapsuluje żądanie wykonania ruchu ({@code MOVE}) w grze.
+ *
+ * <p><b>Wzorzec projektowy:</b> <b>Command</b>.
+ * Komenda deleguje wykonanie do {@link pl.edu.go.game.Game}; walidacja reguł należy do {@code Board/Game}.
+ */
 package pl.edu.go.command;
 
 import pl.edu.go.game.Game;
 import pl.edu.go.move.Move;
-
-/**
- * PlaceStoneCommand — komenda ruchu "postaw kamień".
- *
- * Wzorce:
- * - Command:
- *   - enkapsuluje żądanie wykonania ruchu jako obiekt,
- *   - pozwala GameSession traktować MOVE/PASS/RESIGN jednolicie (GameCommand.execute).
- *
- * Zasada odpowiedzialności:
- * - PlaceStoneCommand NIE waliduje tury ani legalności ruchu.
- * - Walidacja jest SINGLE SOURCE OF TRUTH w Game (tura/finished) i Board (reguły planszy).
- *
- * Przepływ:
- * - TextCommandFactory parsuje "MOVE x y" i buduje Move przez MoveFactory,
- * - PlaceStoneCommand wywołuje game.playMove(move),
- * - w razie błędu Game rzuca wyjątek, który GameSession mapuje na "ERROR ...".
- */
 
 
 public class PlaceStoneCommand implements GameCommand {

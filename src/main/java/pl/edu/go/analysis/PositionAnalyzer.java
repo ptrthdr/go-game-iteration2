@@ -6,6 +6,14 @@ import pl.edu.go.model.StoneGroup;
 
 import java.util.*;
 
+/**
+ * {@code PositionAnalyzer} wykonuje analizę pozycji: wykrywa grupy kamieni oraz (w kontekście projektu)
+ * identyfikuje grupy uznane za martwe.
+ *
+ * <p>Wynik {@code getDeadGroups()} jest wykorzystywany w punktacji jako „jeńcy” oraz przesyłany do GUI jako
+ * {@code DEADSTONES}, aby wyjaśniać rozbieżność między terytorium a wynikiem.
+ */
+
 public class PositionAnalyzer {
 
     private final Board board;
