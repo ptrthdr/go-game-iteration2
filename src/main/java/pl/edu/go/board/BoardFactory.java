@@ -3,7 +3,7 @@ package pl.edu.go.board;
 /**
  * Wzorzec: Factory Method
  * -------------------------
- * Tworzy obiekt Board.
+ * Tworzy obiekt Board
  * Ułatwia zmianę sposobu tworzenia planszy w przyszłości
  * (np. różne warianty, tryby testowe, rozmiary).
  */
