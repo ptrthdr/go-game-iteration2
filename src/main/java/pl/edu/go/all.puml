@@ -3,9 +3,6 @@ skinparam classAttributeIconSize 0
 skinparam dpi 160
 title Diagram klas - Go-Game (Iteracja 2) - serwer + logika + GUI + scoring/review
 
-' =======================
-'  pl.edu.go.board
-' =======================
 package "pl.edu.go.board" as board {
 
   enum Territory {

@@ -1,28 +1,66 @@
 @startuml
 skinparam classAttributeIconSize 0
 skinparam dpi 150
-title Diagram klas - Logika gry Go (Osoba A)
+title Diagram klas – Logika gry Go (pełny, poprawiony)
 
 package board {
+
     class Board {
         - int size
         - int[][] board
+        - int[][] previousBoard
+        - KoRule koRule
+        - GroupAnalyzer groupAnalyzer
+        - TerritoryAnalyzer territoryAnalyzer
+
+        + static final int EMPTY
+        + static final int BLACK
+        + static final int WHITE
+
         + Board(int size)
         + boolean placeStone(int x, int y, int color)
         + int get(int x, int y)
         + void removeGroup(StoneGroup group)
+
         + List<StoneGroup> findCapturedGroups(int x, int y, int color)
-        + List<int[]> neighbors(int x, int y)
-        + int countLiberties(StoneGroup group)
+        + List<StoneGroup> findGroups(int color)
+        + List<Territory> findTerritories(int color)
+
+        + boolean isOnBoard(int x, int y)
     }
 
     class BoardFactory {
         + Board createDefault19x19()
         + Board create(int size)
     }
+
+    class KoRule {
+        + boolean violatesKo(int[][] previous, int[][] current)
+    }
+}
+
+package analysis {
+
+    class GroupAnalyzer {
+        + StoneGroup buildGroup(int x, int y, int color, Board)
+        + List<StoneGroup> findAllGroups(int color, Board)
+        + int countLiberties(StoneGroup, Board)
+        + boolean isCaptured(StoneGroup, Board)
+    }
+
+    class TerritoryAnalyzer {
+        + List<Territory> findTerritories(Board)
+        + int determineOwner(Set<Point>, Board)
+    }
 }
 
 package model {
+
+    class Point {
+        + int x
+        + int y
+    }
+
     class Stone {
         + int x
         + int y
@@ -30,17 +68,38 @@ package model {
     }
 
     class StoneGroup {
+        - int color
+        - Set<Stone> stones
+
         + addStone(Stone)
-        + List<Stone> getStones()
+        + Set<Stone> getStones()
+        + int getColor()
+        + boolean contains(int x, int y)
+    }
+
+    class Territory {
+        - Set<Point> points
+        - int ownerColor
+
+        + int getOwnerColor()
+        + Set<Point> getPoints()
     }
 }
 
 package move {
+
     class Move {
         + int x
         + int y
         + int color
+        + MoveType type
+
         + Move(int x, int y, int color)
+    }
+
+    enum MoveType {
+        NORMAL
+        PASS
     }
 
     class MoveAdapter {
@@ -49,13 +108,26 @@ package move {
 
     class MoveFactory {
         + Move createMove(int x, int y, int color)
+        + Move createPass(int color)
     }
 }
 
+' ===== RELACJE =====
 
-Board --> Stone : uses
-Board --> StoneGroup : creates groups
-StoneGroup --> Stone : contains\n(composite)
+Board --> KoRule : checks
+Board --> GroupAnalyzer : uses
+Board --> TerritoryAnalyzer : uses
+
+GroupAnalyzer --> StoneGroup : builds
+GroupAnalyzer --> Board : analyzes
+
+TerritoryAnalyzer --> Territory : creates
+TerritoryAnalyzer --> Board : analyzes
+
+StoneGroup *-- Stone : contains
+Territory *-- Point : contains
+
+Move --> MoveType
 MoveAdapter --> Move : adapts
 MoveFactory --> Move : creates
 

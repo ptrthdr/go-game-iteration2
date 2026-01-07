@@ -20,8 +20,6 @@ public class Board {
         this.board = new int[size][size];
     }
 
-    // ===== PODSTAWY =====
-
     public boolean inside(int x, int y) {
         return x >= 0 && x < size && y >= 0 && y < size;
     }
@@ -37,8 +35,6 @@ public class Board {
         }
         return n;
     }
-
-    // ===== GRUPY I ODDECHY =====
 
     public StoneGroup getGroup(int x, int y) {
         int color = board[x][y];
@@ -80,8 +76,6 @@ public class Board {
             board[s.getX()][s.getY()] = EMPTY;
     }
 
-    // ===== RUCH =====
-
     public boolean playMove(int color, int x, int y) {
 
         if (!inside(x, y) || board[x][y] != EMPTY)
@@ -89,36 +83,39 @@ public class Board {
 
         int[][] before = deepCopy(board);
         board[x][y] = color;
+
         int opp = (color == BLACK ? WHITE : BLACK);
-        boolean captured = false;
+        int capturedStones = 0;
 
         for (int[] nb : neighbors(x, y)) {
             int nx = nb[0], ny = nb[1];
             if (board[nx][ny] == opp) {
                 StoneGroup g = getGroup(nx, ny);
                 if (countLiberties(g) == 0) {
+                    capturedStones += g.getStones().size();
                     removeGroup(g);
-                    captured = true;
                 }
             }
         }
 
         StoneGroup my = getGroup(x, y);
-        if (countLiberties(my) == 0 && !captured) {
+        if (countLiberties(my) == 0 && capturedStones == 0) {
             board[x][y] = EMPTY;
             return false;
         }
 
-        if (captured && previousBoard != null && boardsEqual(board, previousBoard)) {
-            board[x][y] = EMPTY;
+        if (capturedStones == 1 && previousBoard != null &&
+                boardsEqual(board, previousBoard)) {
+
+            for (int i = 0; i < size; i++)
+                System.arraycopy(before[i], 0, board[i], 0, size);
+
             return false;
         }
 
         previousBoard = before;
         return true;
     }
-
-    // ===== POMOCNICZE =====
 
     private int[][] deepCopy(int[][] src) {
         int[][] copy = new int[size][size];
