@@ -1,16 +1,3 @@
-/**
- * {@code GuiClientApp} jest główną aplikacją JavaFX klienta gry Go.
- *
- * <p><b>Wzorzec architektoniczny:</b> <b>MVC</b> (w praktyce odmiana MVP).
- * <ul>
- *   <li><b>Model</b>: {@link pl.edu.go.client.gui.GameModel} — stan gry po stronie klienta,</li>
- *   <li><b>View</b>: {@link pl.edu.go.client.gui.BoardView} + elementy UI,</li>
- *   <li><b>Controller</b>: {@link pl.edu.go.client.gui.GameController} — mapuje akcje UI na komendy protokołu.</li>
- * </ul>
- *
- * <p>GUI nie liczy reguł Go ani punktacji — jest prezentacją stanu otrzymanego z serwera.
- */
-
 package pl.edu.go.client.gui;
 
 import javafx.application.Application;
@@ -23,9 +10,24 @@ import javafx.stage.Stage;
 import pl.edu.go.client.net.NetworkClient;
 import pl.edu.go.game.GamePhase;
 
+/**
+ * {@code GuiClientApp} jest główną aplikacją JavaFX klienta gry Go.
+ *
+ * <p><b>Wzorzec architektoniczny:</b> <b>MVC</b> (w praktyce odmiana MVP).
+ * <ul>
+ *   <li><b>Model</b>: {@link pl.edu.go.client.gui.GameModel} — stan gry po stronie klienta,</li>
+ *   <li><b>View</b>: {@link pl.edu.go.client.gui.BoardView} + elementy UI,</li>
+ *   <li><b>Controller</b>: {@link pl.edu.go.client.gui.GameController} — mapuje akcje UI na komendy protokołu.</li>
+ * </ul>
+ *
+ * <p>GUI nie liczy reguł Go ani punktacji — jest prezentacją stanu otrzymanego z serwera.
+ */
 public final class GuiClientApp extends Application {
 
+    /** Model klienta, aktualizowany wyłącznie komunikatami z serwera. */
     private final GameModel model = new GameModel();
+
+    /** Warstwa sieciowa klienta (połączenie + odbiór linii protokołu). */
     private final NetworkClient net = new NetworkClient();
 
     private BoardView boardView;
@@ -42,6 +44,16 @@ public final class GuiClientApp extends Application {
     private Button agreeBtn;
     private Button resumeBtn;
 
+    /**
+     * Inicjalizuje UI, wiąże MVC oraz podłącza obsługę sieci.
+     *
+     * <p>Najważniejsze powiązania:
+     * <ul>
+     *   <li>kliknięcia w {@link BoardView} → {@link GameController#onIntersectionClicked(int, int)}</li>
+     *   <li>linie z serwera → {@link GameModel#acceptServerLine(String)}</li>
+     *   <li>zmiana modelu → {@link #refreshUI()} na wątku JavaFX</li>
+     * </ul>
+     */
     @Override
     public void start(Stage stage) {
         controller = new GameController(net, model);
@@ -110,9 +122,13 @@ public final class GuiClientApp extends Application {
         stage.setScene(scene);
         stage.show();
 
+        // Listener modelu może być wywołany z wątku sieciowego; UI odświeżamy przez Platform.runLater(...)
         model.addListener(() -> Platform.runLater(this::refreshUI));
 
+        // Odbierane linie z serwera aktualizują model; model sam powiadamia GUI przez listener
         net.setOnLine(model::acceptServerLine);
+
+        // Obsługa błędów sieciowych: przełączamy UI do stanu rozłączonego
         net.setOnError(ex -> Platform.runLater(() -> {
             System.err.println("[CLIENT] Network error: " + ex.getMessage());
             statusLabel.setText("Disconnected (error)");
@@ -121,6 +137,7 @@ public final class GuiClientApp extends Application {
             refreshUI();
         }));
 
+        // Connect: nawiązanie połączenia i przełączenie UI w tryb "Connected"
         connectBtn.setOnAction(e -> {
             String host = hostField.getText().trim();
             int port;
@@ -146,6 +163,7 @@ public final class GuiClientApp extends Application {
             }
         });
 
+        // Disconnect: zamknięcie połączenia i powrót UI do stanu początkowego
         disconnectBtn.setOnAction(e -> {
             net.disconnect();
             statusLabel.setText("Disconnected");
@@ -157,6 +175,16 @@ public final class GuiClientApp extends Application {
         refreshUI();
     }
 
+    /**
+     * Odświeża widok na podstawie aktualnego stanu {@link GameModel} i połączenia sieciowego.
+     *
+     * <p>Odpowiada za:
+     * <ul>
+     *   <li>przerysowanie planszy,</li>
+     *   <li>aktualizację etykiet (color/turn/phase/score),</li>
+     *   <li>aktywację/dezaktywację przycisków zależnie od stanu gry.</li>
+     * </ul>
+     */
     private void refreshUI() {
         boardView.redraw();
 
@@ -195,6 +223,9 @@ public final class GuiClientApp extends Application {
         }
     }
 
+    /**
+     * Sprząta zasoby po zamknięciu aplikacji (rozłącza klienta).
+     */
     @Override
     public void stop() {
         net.disconnect();

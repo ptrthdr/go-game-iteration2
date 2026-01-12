@@ -1,22 +1,30 @@
-/**
- * {@code TextCommandFactory} mapuje surową linię tekstu protokołu na obiekt {@link pl.edu.go.command.GameCommand}.
- *
- * <p><b>Wzorce projektowe:</b>
- * <ul>
- *   <li><b>Simple Factory / Factory Method</b> — centralizuje tworzenie obiektów komend na podstawie tokenów.</li>
- *   <li><b>Command</b> — zwracane obiekty są implementacjami {@link pl.edu.go.command.GameCommand}.</li>
- * </ul>
- *
- * <p>Parser nie wykonuje logiki gry (np. walidacji reguł), a jedynie buduje komendę i przekazuje do wykonania.
- */
 package pl.edu.go.command;
 
 import pl.edu.go.game.PlayerColor;
 import pl.edu.go.move.Move;
 import pl.edu.go.move.MoveFactory;
 
+/**
+ * {@code TextCommandFactory} mapuje surową linię tekstu protokołu na obiekt {@link GameCommand}.
+ *
+ * <p><b>Wzorce projektowe:</b>
+ * <ul>
+ *   <li><b>Simple Factory / Factory Method</b> — centralizuje tworzenie obiektów komend na podstawie tokenów.</li>
+ *   <li><b>Command</b> — zwracane obiekty są implementacjami {@link GameCommand}.</li>
+ * </ul>
+ *
+ * <p>Fabryka waliduje format wiadomości (liczbę argumentów, typy), ale nie waliduje reguł gry.
+ */
 public class TextCommandFactory {
 
+    /**
+     * Parsuje wiadomość protokołu i buduje odpowiadającą jej komendę.
+     *
+     * @param message linia z sieci (np. {@code "MOVE 3 4"})
+     * @param player  gracz, w imieniu którego wykonujemy komendę
+     * @return obiekt komendy gotowy do wykonania na {@code Game}
+     * @throws IllegalArgumentException gdy format wiadomości jest niepoprawny lub komenda nieznana
+     */
     public GameCommand fromNetworkMessage(String message, PlayerColor player) {
         if (message == null) {
             throw new IllegalArgumentException("Empty command");
@@ -44,7 +52,7 @@ public class TextCommandFactory {
                     throw new IllegalArgumentException("MOVE coordinates must be integers: MOVE x y");
                 }
 
-                // U Ciebie MoveFactory oczekuje int koloru (Board.BLACK/Board.WHITE)
+                // MoveFactory buduje obiekt ruchu; walidacja legalności ruchu należy do Game/Board
                 Move move = MoveFactory.createMove(player.toBoardColor(), x, y);
                 yield new PlaceStoneCommand(move);
             }

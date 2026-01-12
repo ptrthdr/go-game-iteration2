@@ -1,3 +1,21 @@
+package pl.edu.go.server;
+
+import pl.edu.go.analysis.PositionAnalyzer;
+import pl.edu.go.analysis.ScoreCalculator;
+import pl.edu.go.analysis.TerritoryAnalyzer;
+import pl.edu.go.board.Board;
+import pl.edu.go.board.Territory;
+import pl.edu.go.command.GameCommand;
+import pl.edu.go.command.TextCommandFactory;
+import pl.edu.go.game.Game;
+import pl.edu.go.game.GameObserver;
+import pl.edu.go.game.GamePhase;
+import pl.edu.go.game.GameResult;
+import pl.edu.go.game.PlayerColor;
+import pl.edu.go.model.Stone;
+import pl.edu.go.model.StoneGroup;
+
+
 /**
  * {@code GameSession} reprezentuje jedną sesję gry na serwerze i stanowi „most”
  * pomiędzy logiką gry ({@link pl.edu.go.game.Game}) a komunikacją sieciową z klientami.
@@ -34,37 +52,36 @@
  * <p>{@code '1'} oznacza kamień uznany za martwy przez {@code PositionAnalyzer.getDeadGroups()},
  * czyli dokładnie to, co {@code ScoreCalculator} dolicza jako jeńców.
  */
-
-package pl.edu.go.server;
-
-import pl.edu.go.analysis.PositionAnalyzer;
-import pl.edu.go.analysis.ScoreCalculator;
-import pl.edu.go.analysis.TerritoryAnalyzer;
-import pl.edu.go.board.Board;
-import pl.edu.go.board.Territory;
-import pl.edu.go.command.GameCommand;
-import pl.edu.go.command.TextCommandFactory;
-import pl.edu.go.game.Game;
-import pl.edu.go.game.GameObserver;
-import pl.edu.go.game.GamePhase;
-import pl.edu.go.game.GameResult;
-import pl.edu.go.game.PlayerColor;
-import pl.edu.go.model.Stone;
-import pl.edu.go.model.StoneGroup;
-
 public class GameSession implements GameObserver {
 
+    /** Serwerowy „single source of truth” – logika sesji gry. */
     private final Game game;
+
+    /** Parser protokołu: tekst → obiekt komendy (Command). */
     private final TextCommandFactory commandFactory = new TextCommandFactory();
 
+    /** Handler klienta BLACK (może być null do czasu połączenia). */
     private ClientHandler blackPlayer;
+
+    /** Handler klienta WHITE (może być null do czasu połączenia). */
     private ClientHandler whitePlayer;
 
+    /**
+     * Tworzy sesję i rejestruje się jako obserwator gry (Observer).
+     *
+     * @param game logika gry
+     */
     public GameSession(Game game) {
         this.game = game;
         this.game.addObserver(this);
     }
 
+    /**
+     * Przypisuje handler do koloru gracza w tej sesji.
+     *
+     * @param color   BLACK/WHITE
+     * @param handler handler klienta
+     */
     public synchronized void setPlayer(PlayerColor color, ClientHandler handler) {
         if (color == PlayerColor.BLACK) {
             blackPlayer = handler;
@@ -73,6 +90,12 @@ public class GameSession implements GameObserver {
         }
     }
 
+    /**
+     * Uruchamia rozgrywkę: wysyła komunikaty startowe i publikuje pierwszy stan.
+     *
+     * <p>Wysyłane na start:
+     * {@code WELCOME}, {@code PHASE}, a następnie aktualny {@code BOARD} i {@code TURN}.</p>
+     */
     public synchronized void startGame() {
         if (blackPlayer != null) blackPlayer.sendLine("WELCOME BLACK");
         if (whitePlayer != null) whitePlayer.sendLine("WELCOME WHITE");
@@ -84,11 +107,25 @@ public class GameSession implements GameObserver {
         onPlayerToMoveChanged(game.getCurrentPlayer());
     }
 
+    /**
+     * Wysyła linię do obu klientów (jeśli są połączeni).
+     *
+     * @param line linia protokołu
+     */
     private void broadcast(String line) {
         if (blackPlayer != null) blackPlayer.sendLine(line);
         if (whitePlayer != null) whitePlayer.sendLine(line);
     }
 
+    /**
+     * Obsługuje linię otrzymaną od klienta: parsuje komendę i wykonuje ją na {@link Game}.
+     *
+     * <p>Walidacja reguł gry pozostaje w {@code Game/Board}; tu walidujemy głównie format protokołu
+     * oraz raportujemy błędy do nadawcy jako {@code ERROR ...}.</p>
+     *
+     * @param from    klient (BLACK/WHITE)
+     * @param message surowa linia protokołu
+     */
     public synchronized void handleClientMessage(ClientHandler from, String message) {
         String trimmed = message == null ? "" : message.trim();
         if (trimmed.isEmpty()) return;
@@ -109,6 +146,12 @@ public class GameSession implements GameObserver {
         }
     }
 
+    /**
+     * Observer: zmiana planszy.
+     *
+     * <p>Serializuje stan {@link Board} do formatu protokołu:
+     * {@code BOARD <size>} + {@code ROW ...} + {@code END_BOARD}.
+     */
     @Override
     public void onBoardChanged(Board board) {
         int[][] state = board.getState();
@@ -131,21 +174,38 @@ public class GameSession implements GameObserver {
         broadcast("END_BOARD");
     }
 
+    /**
+     * Observer: zakończenie gry.
+     *
+     * <p>Wysyła {@code END <winner> <reason>}, gdzie {@code winner} to {@code BLACK}/{@code WHITE}/{@code NONE}.
+     */
     @Override
     public void onGameEnded(GameResult result) {
         String winnerStr = (result.getWinner() == null) ? "NONE" : result.getWinner().name();
         broadcast("END " + winnerStr + " " + result.getReason());
     }
 
+    /**
+     * Observer: zmiana gracza na ruchu.
+     *
+     * <p>Wysyła {@code TURN <color>} do obu klientów.
+     */
     @Override
     public void onPlayerToMoveChanged(PlayerColor player) {
         broadcast("TURN " + player.name());
     }
 
+    /**
+     * Observer: zmiana fazy gry.
+     *
+     * <p>Wysyła {@code PHASE <phase>}. Przy wejściu do {@code SCORING_REVIEW} dosyła pakiet punktacji
+     * ({@code SCORE}/{@code TERRITORY}/{@code DEADSTONES}). Przy {@code PLAYING} informuje o wznowieniu.
+     */
     @Override
     public void onPhaseChanged(GamePhase phase) {
         broadcast("PHASE " + phase.name());
 
+        // W fazie review dosyłamy dane do wizualizacji punktacji (zad. 8/9)
         if (phase == GamePhase.SCORING_REVIEW) {
             broadcast("INFO Scoring review: AGREE to accept or RESUME to continue.");
             sendScoreTerritoryAndDeadMask();
@@ -154,6 +214,13 @@ public class GameSession implements GameObserver {
         }
     }
 
+
+    /**
+     * Wysyła do klientów pakiet danych punktacji dla trybu review:
+     * {@code SCORE}, {@code TERRITORY} oraz {@code DEADSTONES}.
+     *
+     * <p>Te dane są wykorzystywane po stronie GUI wyłącznie do overlay (bez zmiany reguł gry).</p>
+     */
     private void sendScoreTerritoryAndDeadMask() {
         Board b = game.getBoard();
         int size = b.getState().length;

@@ -1,12 +1,3 @@
-/**
- * {@code GameServer} uruchamia serwer TCP dla gry Go.
- *
- * <p><b>Architektura:</b> Client–Server.
- * {@code GameServer} inicjalizuje warstwę transportową (socket), tworzy sesję gry
- * ({@link pl.edu.go.server.GameSession}) i przypisuje łączących się klientów do kolorów.
- *
- * <p>Klasa nie implementuje reguł gry ani punktacji; odpowiada za bootstrap i cykl życia serwera.
- */
 package pl.edu.go.server;
 
 import pl.edu.go.board.Board;
@@ -18,15 +9,37 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
+/**
+ * {@code GameServer} uruchamia serwer TCP dla gry Go.
+ *
+ * <p><b>Architektura:</b> Client–Server.
+ * {@code GameServer} inicjalizuje warstwę transportową (socket), tworzy sesję gry
+ * ({@link pl.edu.go.server.GameSession}) i przypisuje łączących się klientów do kolorów.
+ *
+ * <p>Klasa nie implementuje reguł gry ani punktacji; odpowiada za bootstrap i cykl życia serwera.
+ */
 public final class GameServer {
 
+    /**
+     * Punkt wejścia serwera.
+     *
+     * <p>Flow:
+     * <ol>
+     *   <li>tworzy {@link Board} i {@link Game},</li>
+     *   <li>tworzy {@link GameSession} spinającą warstwę sieciową z logiką gry,</li>
+     *   <li>akceptuje dwóch klientów i przypisuje im kolory (BLACK, potem WHITE),</li>
+     *   <li>uruchamia wątki {@link ClientHandler} i startuje grę.</li>
+     * </ol>
+     */
     public static void main(String[] args) {
         int port = 5001;
         int boardSize = 9; // testowo 9x9
 
+        // Inicjalizacja stanu gry po stronie serwera (Single Source of Truth)
         Board board = BoardFactory.createBoard(boardSize);
         Game game = new Game(board);
+
+        // Sesja łączy protokół sieciowy (ClientHandler) z wywołaniami na Game
         GameSession session = new GameSession(game);
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -55,6 +68,7 @@ public final class GameServer {
                 System.out.println("WARNING: Some client handlers not ready in time. Starting game anyway.");
             }
 
+            // Start sesji: wysyłka komunikatów startowych (WELCOME/BOARD/TURN/PHASE) i gotowość na komendy
             session.startGame();
             System.out.println("Game started. Waiting for moves...");
 

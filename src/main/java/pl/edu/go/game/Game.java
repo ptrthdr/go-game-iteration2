@@ -1,3 +1,12 @@
+package pl.edu.go.game;
+
+import pl.edu.go.analysis.ScoreCalculator;
+import pl.edu.go.board.Board;
+import pl.edu.go.move.Move;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * {@code Game} implementuje centralną logikę rozgrywki Go na poziomie „sesji gry”
  * (warstwa aplikacyjna nad {@code Board}).
@@ -25,16 +34,6 @@
  *
  * <p><b>Zadanie 10:</b> gracz może zakończyć grę w dowolnym momencie przez {@code RESIGN}.
  */
-
-package pl.edu.go.game;
-
-import pl.edu.go.board.Board;
-import pl.edu.go.move.Move;
-import pl.edu.go.analysis.ScoreCalculator;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class Game {
 
     private final Board board;
@@ -52,52 +51,103 @@ public class Game {
 
     private final List<GameObserver> observers = new ArrayList<>();
 
+    /**
+     * Tworzy nową sesję gry na podanej planszy.
+     *
+     * @param board plansza gry (źródło prawdy dla reguł planszy)
+     */
     public Game(Board board) {
         this.board = board;
     }
 
+    /**
+     * Zwraca aktualną planszę gry.
+     *
+     * @return obiekt {@link Board} powiązany z tą sesją gry
+     */
     public Board getBoard() {
         return board;
     }
 
+    /**
+     * Zwraca gracza, który ma aktualnie wykonać ruch.
+     *
+     * @return kolor gracza na ruchu
+     */
     public PlayerColor getCurrentPlayer() {
         return currentPlayer;
     }
 
+    /**
+     * Informuje, czy gra jest zakończona.
+     *
+     * @return {@code true} jeśli gra została zakończona (RESIGN lub punktacja)
+     */
     public boolean isFinished() {
         return finished;
     }
 
+    /**
+     * Zwraca aktualną fazę gry.
+     *
+     * @return faza ({@code PLAYING}/{@code SCORING_REVIEW}/{@code FINISHED})
+     */
     public GamePhase getPhase() {
         return phase;
     }
 
+    /**
+     * Rejestruje obserwatora zdarzeń gry.
+     *
+     * @param observer obiekt nasłuchujący zmian (plansza/tura/faza/koniec gry)
+     */
     public void addObserver(GameObserver observer) {
         observers.add(observer);
     }
 
+    /**
+     * Usuwa wcześniej zarejestrowanego obserwatora.
+     *
+     * @param observer obserwator do usunięcia
+     */
     public void removeObserver(GameObserver observer) {
         observers.remove(observer);
     }
 
+    /**
+     * Powiadamia obserwatorów o zmianie planszy.
+     * Wywoływane po poprawnym ruchu (MOVE) lub po zdarzeniach wpływających na widok planszy.
+     */
     private void notifyBoardChanged() {
         for (GameObserver o : observers) {
             o.onBoardChanged(board);
         }
     }
 
+    /**
+     * Powiadamia obserwatorów o zmianie gracza na ruchu.
+     * Wywoływane po ruchu lub PASS/RESUME.
+     */
     private void notifyPlayerToMoveChanged() {
         for (GameObserver o : observers) {
             o.onPlayerToMoveChanged(currentPlayer);
         }
     }
 
+    /**
+     * Powiadamia obserwatorów o zakończeniu gry.
+     * Przekazuje końcowy {@link GameResult}.
+     */
     private void notifyGameEnded() {
         for (GameObserver o : observers) {
             o.onGameEnded(result);
         }
     }
 
+    /**
+     * Powiadamia obserwatorów o zmianie fazy gry.
+     * Np. przejście do {@code SCORING_REVIEW} lub {@code FINISHED}.
+     */
     private void notifyPhaseChanged() {
         for (GameObserver o : observers) {
             o.onPhaseChanged(phase);
@@ -106,6 +156,13 @@ public class Game {
 
     // ===== MOVE =====
 
+    /**
+     * Wykonuje ruch na podstawie obiektu {@link Move}.
+     * Kolor ruchu jest mapowany na {@link PlayerColor}, a następnie delegowany do {@link #playMove(PlayerColor, int, int)}.
+     *
+     * @param move ruch (kolor + współrzędne)
+     * @throws IllegalArgumentException gdy {@code move == null}
+     */
     public void playMove(Move move) {
         if (move == null) {
             throw new IllegalArgumentException("Move is null");
@@ -114,6 +171,18 @@ public class Game {
         playMove(player, move.getX(), move.getY());
     }
 
+    /**
+     * Wykonuje ruch gracza w fazie {@code PLAYING}.
+     *
+     * <p>Waliduje stan sesji (zakończenie, faza, tura), a legalność ruchu na planszy deleguje do {@link Board}.
+     * Po poprawnym ruchu resetuje liczbę kolejnych PASS, zmienia turę i publikuje zdarzenia observerów.</p>
+     *
+     * @param player gracz wykonujący ruch
+     * @param x      kolumna
+     * @param y      wiersz
+     * @throws IllegalStateException    gdy gra zakończona / zła faza / nie tura gracza
+     * @throws IllegalArgumentException gdy ruch jest nielegalny na {@link Board}
+     */
     public void playMove(PlayerColor player, int x, int y) {
         if (finished) {
             throw new IllegalStateException("Game already finished");
@@ -176,8 +245,11 @@ public class Game {
     // ===== ZASADA 8: REVIEW =====
 
     /**
-     * AGREE — gracz akceptuje automatycznie policzony wynik/terytorium.
-     * Gdy obaj gracze AGREE -> uruchamiamy ZASADĘ 9 i kończymy grę (END).
+     * AGREE — gracz akceptuje automatycznie policzony wynik/terytorium w {@code SCORING_REVIEW}.
+     * Gdy obaj gracze wykonają AGREE, uruchamiana jest punktacja (zad. 9) i gra się kończy.
+     *
+     * @param player gracz akceptujący wynik
+     * @throws IllegalStateException jeśli gra zakończona lub nie w fazie {@code SCORING_REVIEW}
      */
     public void agree(PlayerColor player) {
         if (finished) {
@@ -231,6 +303,9 @@ public class Game {
 
     /**
      * RESIGN — gra kończy się od razu, wygrywa przeciwnik.
+     *
+     * @param player gracz, który rezygnuje
+     * @throws IllegalStateException jeśli gra już jest zakończona
      */
     public void resign(PlayerColor player) {
         if (finished) {
@@ -247,6 +322,9 @@ public class Game {
 
     // ===== koniec przez terytorium (zasada 9) =====
 
+    /**
+     * Kończy grę po uzgodnieniu wyniku w review: liczy punktację terytorialną i publikuje {@link GameResult}.
+     */
     private void endByTerritory() {
         finished = true;
         phase = GamePhase.FINISHED;

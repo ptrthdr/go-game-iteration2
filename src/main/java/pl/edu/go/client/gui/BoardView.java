@@ -1,3 +1,10 @@
+package pl.edu.go.client.gui;
+
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
+
 /**
  * {@code BoardView} renderuje planszę Go w JavaFX.
  *
@@ -9,14 +16,6 @@
  *
  * <p>Komponent nie liczy nic biznesowo; tylko wizualizuje dane z {@link pl.edu.go.client.gui.GameModel}.
  */
-
-package pl.edu.go.client.gui;
-
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-
 public final class BoardView extends Canvas {
 
     public interface IntersectionClickHandler {
@@ -56,7 +55,7 @@ public final class BoardView extends Canvas {
         double stepX = gridW / (size - 1);
         double stepY = gridH / (size - 1);
 
-        // grid
+        // grid — rysowanie siatki planszy (linie poziome i pionowe)
         g.setStroke(Color.BLACK);
         g.setLineWidth(1.0);
         for (int i = 0; i < size; i++) {
@@ -68,10 +67,10 @@ public final class BoardView extends Canvas {
 
         int[][] board = model.getBoard();
 
-        // promień (zmniejszony jak u Ciebie)
+        // promień — dopasowany do kroku siatki, żeby kamienie mieściły się na przecięciach
         double stoneR = Math.min(stepX, stepY) * 0.21;
 
-        // stones
+        // stones — rysowanie kamieni na przecięciach siatki
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 int cell = board[x][y];
@@ -94,10 +93,10 @@ public final class BoardView extends Canvas {
             }
         }
 
-        // overlays tylko w review albo po zakończeniu territory
+        // overlays tylko w review albo po zakończeniu territory — nakładki punktacji (terytorium/martwe)
         if (model.showScoringOverlays()) {
 
-            // TERRITORY overlay na pustych polach
+            // TERRITORY overlay na pustych polach — znaczniki wg mapy terytorium (b/w/s)
             char[][] terr = model.getTerritoryMap();
             if (terr != null && terr.length == size && terr[0].length == size) {
                 double r = stoneR * 0.38;
@@ -110,23 +109,27 @@ public final class BoardView extends Canvas {
                         char t = terr[x][y];
 
                         if (t == 'b') {
+                            // 'b' — terytorium czarnych
                             g.setGlobalAlpha(0.25);
                             g.setFill(Color.BLACK);
                             double cx = pad + x * stepX;
                             double cy = pad + y * stepY;
                             g.fillOval(cx - r, cy - r, 2 * r, 2 * r);
                         } else if (t == 'w') {
+                            // 'w' — terytorium białych
                             g.setGlobalAlpha(0.40); // bardziej widoczne białe punkty
                             g.setFill(Color.WHITE);
                             double cx = pad + x * stepX;
                             double cy = pad + y * stepY;
                             g.fillOval(cx - r, cy - r, 2 * r, 2 * r);
 
+                            // kontur dla czytelności na jasnym tle
                             g.setGlobalAlpha(0.25);
                             g.setStroke(Color.BLACK);
                             g.setLineWidth(1.0);
                             g.strokeOval(cx - r, cy - r, 2 * r, 2 * r);
                         } else if (t == 's') {
+                            // 's' — seki
                             g.setGlobalAlpha(0.22);
                             g.setFill(Color.GRAY);
                             double cx = pad + x * stepX;
@@ -186,6 +189,7 @@ public final class BoardView extends Canvas {
         double mx = e.getX();
         double my = e.getY();
 
+        // Mapowanie pikseli na indeksy planszy: najbliższe przecięcie siatki (round)
         int x = (int) Math.round((mx - pad) / stepX);
         int y = (int) Math.round((my - pad) / stepY);
 
