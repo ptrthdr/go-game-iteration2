@@ -124,6 +124,11 @@ public class PositionAnalyzer {
     /**
      * Zbiera wszystkie spójne obszary pustych pól
      * przylegające do danej grupy kamieni. Pozwala obliczyć liczbę oczu.
+     * 
+     * Spójny obszar pustych pól to zbiór pustych punktów planszy,
+     * połączonych sąsiedztwem ortogonalnym (góra, dół, lewo, prawo),
+     * który może zostać w całości osiągnięty, poruszając się wyłącznie po pustych
+     * polach.
      *
      * @param g grupa kamieni
      * @return lista obszarów pustych pól
@@ -145,7 +150,7 @@ public class PositionAnalyzer {
                     Stack<int[]> stack = new Stack<>();
                     stack.push(new int[] { nb[0], nb[1] });
 
-                    // DFS po pustych polach
+                    // Depth-First Search po pustych polach
                     while (!stack.isEmpty()) {
                         int[] p = stack.pop();
                         String key = p[0] + "," + p[1];
@@ -173,6 +178,10 @@ public class PositionAnalyzer {
      * stanowi oko dla określonego koloru.
      * Jeśli jakiekolwiek pole obszaru styka się z kamieniem przeciwnika
      * to nie jest okiem.
+     * 
+     * Oko to spójny obszar pustych pól, który:
+     * przylega do analizowanej grupy kamieni,
+     * oraz żadne pole tego obszaru nie sąsiaduje z kamieniem przeciwnika.
      * 
      * @param area  zbiór pustych pól
      * @param color kolor grupy

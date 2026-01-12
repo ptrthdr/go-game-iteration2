@@ -25,7 +25,7 @@ public class ScoreCalculator {
         TerritoryAnalyzer territoryAnalyzer = new TerritoryAnalyzer(board);
         PositionAnalyzer positionAnalyzer = new PositionAnalyzer(board);
 
-        Territory[][] t = territoryAnalyzer.computeTerritory();
+        Territory[][] t = territoryAnalyzer.computeTerritory(); // które puste pola dają punkty i komu
 
         int black = 0;
         int white = 0;

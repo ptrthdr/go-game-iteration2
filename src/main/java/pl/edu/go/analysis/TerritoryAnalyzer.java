@@ -31,6 +31,7 @@ public class TerritoryAnalyzer {
 
     /**
      * Oblicza końcowe przypisanie terytorium.
+     * korekta globalna + seki
      *
      * @return tablica terytorium dla każdego pola planszy
      */
@@ -41,12 +42,12 @@ public class TerritoryAnalyzer {
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
 
-                if (board.getState()[x][y] == Board.EMPTY) {
+                if (board.getState()[x][y] == Board.EMPTY) { // seki dotyczy grup kamieni, nie pustych pól.
                     out[x][y] = raw[x][y];
                     continue;
                 }
 
-                StoneGroup g = board.getGroup(x, y);
+                StoneGroup g = board.getGroup(x, y); // seki analizujemy na poziomie grupy
 
                 // Wykrywanie seki
                 if (board.countLiberties(g) >= 2 && groupTouchesNeutral(g, raw))
@@ -59,7 +60,10 @@ public class TerritoryAnalyzer {
     }
 
     /**
-     * Wstępna analiza terytorium na podstawie sąsiedztwa.
+     * Wstępna analiza terytorium na podstawie sąsiedztwa - Lokalna, uproszczona
+     * decyzja.
+     * wstępne przypisanie pustych pól
+     * bez analizy seki
      */
     private Territory[][] computeRawTerritory() {
         Territory[][] out = new Territory[size][size];
@@ -72,7 +76,8 @@ public class TerritoryAnalyzer {
                     continue;
                 }
 
-                boolean b = false, w = false;
+                boolean b = false, w = false; // b - czy pole styka się z czarnym kamieniem, w - czy pole styka się z
+                                              // białym kamieniem
 
                 for (int[] nb : board.neighbors(x, y)) {
                     if (board.getState()[nb[0]][nb[1]] == Board.BLACK)
@@ -95,7 +100,9 @@ public class TerritoryAnalyzer {
     }
 
     /**
-     * Sprawdza, czy grupa kamieni styka się z neutralnym obszarem.
+     * Sprawdza, czy grupa kamieni styka się z neutralnym obszarem (najmniej
+     * jednym), co jest jednym
+     * z warunków wykrywania seki.
      */
     private boolean groupTouchesNeutral(StoneGroup g, Territory[][] raw) {
         for (Stone s : g.getStones()) {

@@ -249,7 +249,7 @@ public class Board {
         // Wyznaczenie własnej grupy po wykonaniu ruchu
         StoneGroup my = getGroup(x, y);
 
-        // Sprawdzenie zakazu samobójstwa (zasada 5)
+        // Sprawdzenie zakazu samobójstwa -- ZASADA 5
         if (countLiberties(my) == 0 && capturedStones == 0) {
 
             // Cofnięcie ruchu w przypadku samobójstwa
@@ -257,7 +257,7 @@ public class Board {
             return false;
         }
 
-        // Sprawdzenie reguły KO (zasada 6)
+        // Sprawdzenie reguły KO -- ZASADA 6
         if (capturedStones == 1 && previousBoard != null &&
                 boardsEqual(board, previousBoard)) {
 
