@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,14 +13,15 @@
     <name>Go Game (Iteration 2)</name>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>17.0.10</javafx.version>
     </properties>
 
     <dependencies>
-        <!-- JUnit 5 do testów jednostkowych -->
+
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -28,12 +29,13 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JavaFX (GUI) -->
+        <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -50,7 +52,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Testy (JUnit 5) -->
+            <!-- JUnit 5 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -82,13 +84,13 @@
                 </configuration>
             </plugin>
 
-            <!-- Exec: dwa tryby uruchamiania -->
+            <!-- Exec plugin -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
-
                 <executions>
+
                     <execution>
                         <id>server</id>
                         <goals>
@@ -108,10 +110,11 @@
                             <mainClass>pl.edu.go.MainTest</mainClass>
                         </configuration>
                     </execution>
+
                 </executions>
             </plugin>
 
-            <!-- JavaFX run: mvn javafx:run -->
+            <!-- JavaFX -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -121,24 +124,24 @@
                 </configuration>
             </plugin>
 
-            <!-- Javadoc: generowanie dokumentacji API -->
+            <!-- JavaDoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.6.3</version>
+
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <docencoding>${project.build.sourceEncoding}</docencoding>
                     <charset>${project.build.sourceEncoding}</charset>
 
-                    <!-- Żeby nie wywalało się na ostrych checkach HTML/doclint (częste na studiach) -->
                     <doclint>none</doclint>
                     <failOnError>false</failOnError>
-
-                    <!-- Opcjonalnie: jeśli chcesz bardziej "czytelną" dokumentację -->
                     <show>protected</show>
                 </configuration>
+
                 <executions>
+
                     <!-- mvn javadoc:javadoc -->
                     <execution>
                         <id>generate-javadoc</id>
@@ -147,16 +150,16 @@
                         </goals>
                     </execution>
 
-                    <!-- mvn package -> dołącza target/*-javadoc.jar -->
+                    <!-- mvn package -> javadoc.jar -->
                     <execution>
                         <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
                     </execution>
+
                 </executions>
             </plugin>
-
 
         </plugins>
     </build>
